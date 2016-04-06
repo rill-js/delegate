@@ -1,4 +1,0 @@
-bin/* -diff
-bin/* merge=ours
-lib/* -diff
-lib/* merge=ours

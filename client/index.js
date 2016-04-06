@@ -1,14 +1,14 @@
-"use strict";
+'use strict'
 
-var closest   = require("component-closest");
-var EVENTS    = require("./events.json");
-var _handlers = {};
+var closest = require('component-closest')
+var EVENTS = require('./events.json')
+var _handlers = {}
 
 // Initialize a listener for all events to start delegation.
-EVENTS.forEach(function (type) { document.addEventListener(type, onEvent, true); });
+EVENTS.forEach(function (type) { document.addEventListener(type, onEvent, true) })
 
 // Expose middleware.
-module.exports = middleware;
+module.exports = middleware
 
 /**
  * @public
@@ -22,32 +22,32 @@ module.exports = middleware;
  * @param {Function} handler - The function called if the event is emitted.
  */
 function middleware (type, selector, handler) {
-	if (!~EVENTS.indexOf(type)) {
-		throw new Error("@rill/delegate: Unknown event type '" + type + "'.");
-	}
+  if (!~EVENTS.indexOf(type)) {
+    throw new Error('@rill/delegate: Unknown event type "' + type + '".')
+  }
 
-	if (typeof handler !== "function") {
-		throw new TypeError("@rill/delegate: Event handler must be a function.");
-	}
+  if (typeof handler !== 'function') {
+    throw new TypeError('@rill/delegate: Event handler must be a function.')
+  }
 
-	// Store a hidden selector for use the delgator.
-	handler._selector = selector;
+  // Store a hidden selector for use the delgator.
+  handler._selector = selector
 
-	return function (ctx, next) {
-		// Reset event listeners once per request.
-		if (!ctx._delegation_reset) {
-			_handlers               = {};
-			ctx._delegation_reset = true;
-		}
+  return function (ctx, next) {
+    // Reset event listeners once per request.
+    if (!ctx._delegation_reset) {
+      _handlers = {}
+      ctx._delegation_reset = true
+    }
 
-		// Ensure handlers for the current event type exist.
-		var handlers = _handlers[type] = (_handlers[type] || []);
-		// Add the current handler.
-		handlers.push(handler);
-		// Continue request.
-		return next();
-	};
-};
+    // Ensure handlers for the current event type exist.
+    var handlers = _handlers[type] = (_handlers[type] || [])
+    // Add the current handler.
+    handlers.push(handler)
+    // Continue request.
+    return next()
+  }
+}
 
 /*
  * @private
@@ -57,20 +57,20 @@ function middleware (type, selector, handler) {
  * @param {Event} e - The DOM event being handled.
  */
 function onEvent (e) {
-	var type     = e.type.toLowerCase();
-	var handlers = _handlers[type];
-	if (!handlers || !handlers.length) return;
+  var type = e.type.toLowerCase()
+  var handlers = _handlers[type]
+  if (!handlers || !handlers.length) return
 
-	var handler;
-	var currentTarget = null;
-	var len = handlers.length;
-	// Setup current target which will match the delgated selector.
-	Object.defineProperty(e, "currentTarget", { value: currentTarget, writable: true });
+  var handler
+  var currentTarget = null
+  var len = handlers.length
+  // Setup current target which will match the delgated selector.
+  Object.defineProperty(e, 'currentTarget', { value: currentTarget, writable: true })
 
-	// Run all matched events.
-	for (var i = 0; i < len; i++) {
-		handler = handlers[i];
-		e.currentTarget = closest(e.target, handler._selector);
-		if (e.currentTarget) handler(e);
-	}
-};
+  // Run all matched events.
+  for (var i = 0; i < len; i++) {
+    handler = handlers[i]
+    e.currentTarget = closest(e.target, handler._selector)
+    if (e.currentTarget) handler(e)
+  }
+}

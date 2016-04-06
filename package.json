@@ -1,26 +1,13 @@
 {
   "name": "@rill/delegate",
-  "version": "0.1.0",
   "description": "Isomorphic request based event delegation for Rill.",
+  "version": "0.1.1",
   "author": "Dylan Piercey <pierceydylan@gmail.com>",
-  "main": "server/index.js",
   "browser": "client/index.js",
-  "license": "MIT",
-  "scripts": {
-    "test": "gulp test"
-  },
-  "keywords": [
-    "dom",
-    "virtual",
-    "event",
-    "handler",
-    "rill",
-    "isomorphic",
-    "universal"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/rill-js/delegate"
+  "bugs": "https://github.com/rill-js/delegate/issues",
+  "dependencies": {
+    "component-closest": "^1.0.0",
+    "matches-selector": "^1.0.0"
   },
   "devDependencies": {
     "gulp": "^3.9.0",
@@ -28,10 +15,33 @@
     "jsdom": "^8.1.0",
     "jsdom-global": "^1.6.2",
     "rill": "^0.5.0",
+    "snazzy": "^3.0.0",
+    "standard": "^6.0.8",
     "supertest": "^1.2.0"
   },
-  "dependencies": {
-    "component-closest": "^1.0.0",
-    "matches-selector": "^1.0.0"
+  "homepage": "https://github.com/rill-js/delegate",
+  "keywords": [
+    "dom",
+    "event",
+    "handler",
+    "isomorphic",
+    "rill",
+    "universal",
+    "virtual"
+  ],
+  "license": "MIT",
+  "main": "server/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rill-js/delegate"
+  },
+  "scripts": {
+    "test": "standard --verbose | snazzy && gulp test"
+  },
+  "standard": {
+    "globals": [
+      "describe",
+      "it"
+    ]
   }
 }
