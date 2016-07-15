@@ -62,15 +62,13 @@ function onEvent (e) {
   if (!handlers || !handlers.length) return
 
   var handler
-  var currentTarget = null
   var len = handlers.length
-  // Setup current target which will match the delgated selector.
-  Object.defineProperty(e, 'currentTarget', { value: currentTarget, writable: true })
 
   // Run all matched events.
   for (var i = 0; i < len; i++) {
     handler = handlers[i]
-    e.currentTarget = closest(e.target, handler._selector)
+    // Setup current target which will match the delgated selector.
+    Object.defineProperty(e, 'currentTarget', { value: closest(e.target, handler._selector) })
     if (e.currentTarget) handler(e)
   }
 }
