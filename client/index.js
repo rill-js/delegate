@@ -26,6 +26,10 @@ function middleware (type, selector, handler) {
     throw new Error('@rill/delegate: Unknown event type "' + type + '".')
   }
 
+  if (typeof selector !== 'string') {
+    throw new TypeError('@rill/delegate: Selector must be a string')
+  }
+
   if (typeof handler !== 'function') {
     throw new TypeError('@rill/delegate: Event handler must be a function.')
   }
