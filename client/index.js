@@ -27,7 +27,7 @@ function middleware (type, selector, handler) {
   }
 
   if (typeof selector !== 'string') {
-    throw new TypeError('@rill/delegate: Selector must be a string')
+    throw new TypeError('@rill/delegate: Selector must be a string.')
   }
 
   if (typeof handler !== 'function') {
