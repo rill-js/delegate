@@ -1,8 +1,33 @@
-[![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg)](http://standardjs.com/)
-[![Chat about Rill at https://gitter.im/rill-js/rill](https://badges.gitter.im/rill-js/rill.svg)](https://gitter.im/rill-js/rill?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+<h1 align="center">
+  <!-- Logo -->
+  <img src="https://raw.githubusercontent.com/rill-js/rill/master/Rill-Icon.jpg" alt="Rill"/>
+  <br/>
+  @rill/delegate
+	<br/>
 
-# Rill Delegate
-Isomorphic event delegation utility for Rill.
+  <!-- Stability -->
+  <a href="https://nodejs.org/api/documentation.html#documentation_stability_index">
+    <img src="https://img.shields.io/badge/stability-stable-brightgreen.svg?style=flat-square" alt="API stability"/>
+  </a>
+  <!-- Standard -->
+  <a href="https://github.com/feross/standard">
+    <img src="https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat-square" alt="Standard"/>
+  </a>
+  <!-- NPM version -->
+  <a href="https://npmjs.org/package/@rill/delegate">
+    <img src="https://img.shields.io/npm/v/@rill/delegate.svg?style=flat-square" alt="NPM version"/>
+  </a>
+  <!-- Downloads -->
+  <a href="https://npmjs.org/package/@rill/delegate">
+    <img src="https://img.shields.io/npm/dm/@rill/delegate.svg?style=flat-square" alt="Downloads"/>
+  </a>
+  <!-- Gitter Chat -->
+  <a href="https://gitter.im/rill-js/rill">
+    <img src="https://img.shields.io/gitter/room/rill-js/rill.svg?style=flat-square" alt="Gitter Chat"/>
+  </a>
+</h1>
+
+Isomorphic event delegation utility for Rill. This allows for isomorphic DOM event binding with any templating language.
 
 # Installation
 
@@ -19,11 +44,12 @@ npm install @rill/delegate
   when in the browser. (Does nothing server side).
 
 ```javascript
-const on = require("@rill/delegate");
+const app = require('rill')()
+const on = require('@rill/delegate')
 
-app.get("/",
+app.get('/',
     // Here we listen for `keyup` events that match a `.search` element.
-    on("keyup", ".search", e => {
+    on('keyup', '.search', e => {
         // `currentTarget` will be the element that matched the selector.
         const input = e.currentTarget;
         // Here we can handle the event.
@@ -34,7 +60,7 @@ app.get("/",
 );
 
 // The above click event will not be handled if we navigate to a different route.
-app.get("/contact", ...);
+app.get('/contact', ...);
 ```
 
 ### Contributions

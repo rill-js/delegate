@@ -1,7 +1,7 @@
 {
   "name": "@rill/delegate",
   "description": "Isomorphic request based event delegation for Rill.",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "author": "Dylan Piercey <pierceydylan@gmail.com>",
   "browser": "client/index.js",
   "bugs": "https://github.com/rill-js/delegate/issues",
@@ -35,7 +35,7 @@
   },
   "scripts": {
     "lint": "standard --verbose | snazzy",
-    "mocha": "mocha --require jsdom-global/register ./test/*Test.js",
+    "mocha": "mocha --require jsdom-global/register ./test/*.test.js",
     "test": "npm run lint && npm run mocha"
   },
   "standard": {
