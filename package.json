@@ -1,7 +1,7 @@
 {
   "name": "@rill/delegate",
   "description": "Isomorphic request based event delegation for Rill.",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "author": "Dylan Piercey <pierceydylan@gmail.com>",
   "browser": "client/index.js",
   "bugs": "https://github.com/rill-js/delegate/issues",
@@ -9,12 +9,12 @@
     "component-closest": "^1.0.1"
   },
   "devDependencies": {
-    "jsdom": "9.1.0",
-    "jsdom-global": "^2.0.0",
+    "jsdom": "9.5.0",
+    "jsdom-global": "^2.1.0",
     "mocha": "^3.0.2",
-    "rill": "^0.8.1",
-    "snazzy": "^4.0.1",
-    "standard": "^7.1.2",
+    "rill": "^2.1.6",
+    "snazzy": "^5.0.0",
+    "standard": "^8.1.0",
     "supertest": "^2.0.0"
   },
   "homepage": "https://github.com/rill-js/delegate",

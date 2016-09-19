@@ -1,11 +1,8 @@
 'use strict'
 
 var closest = require('component-closest')
-var EVENTS = require('./events.json')
-var _handlers = {}
-
-// Initialize a listener for all events to start delegation.
-EVENTS.forEach(function (type) { document.addEventListener(type, onEvent, true) })
+var EVENTS = process.env.NODE_ENV !== 'production' && require('./events.json')
+var _registered = {}
 
 // Expose middleware.
 module.exports = middleware
@@ -18,20 +15,26 @@ module.exports = middleware
  * Each request resets all listeners to keep them isolated.
  *
  * @param {String} type - the type of event to listen for.
- * @param {String} selector - A valid css selector.
+ * @param {String} [selector] - A valid css selector.
  * @param {Function} handler - The function called if the event is emitted.
  */
 function middleware (type, selector, handler) {
-  if (!~EVENTS.indexOf(type)) {
-    throw new Error('@rill/delegate: Unknown event type "' + type + '".')
+  // Make selector optional (defaults to window).
+  if (typeof selector === 'function') {
+    handler = selector
+    selector = null
   }
 
-  if (typeof selector !== 'string') {
-    throw new TypeError('@rill/delegate: Selector must be a string.')
+  assert(typeof type === 'string', 'Event name must be a string')
+  assert(typeof handler === 'function', 'Event handler must be a function')
+  if (process.env.NODE_ENV !== 'production') {
+    assert(~EVENTS.indexOf(type), 'Unknown event type "' + type + '".')
   }
 
-  if (typeof handler !== 'function') {
-    throw new TypeError('@rill/delegate: Event handler must be a function.')
+  // Lazily register event delegators.
+  if (!_registered[type]) {
+    _registered[type] = []
+    document.addEventListener(type, onEvent, true)
   }
 
   // Store a hidden selector for use the delgator.
@@ -40,14 +43,18 @@ function middleware (type, selector, handler) {
   return function (ctx, next) {
     // Reset event listeners once per request.
     if (!ctx._delegation_reset) {
-      _handlers = {}
       ctx._delegation_reset = true
+
+      for (var key in _registered) {
+        if (_registered[key].length) {
+          _registered[key] = []
+        }
+      }
     }
 
-    // Ensure handlers for the current event type exist.
-    var handlers = _handlers[type] = (_handlers[type] || [])
-    // Add the current handler.
-    handlers.push(handler)
+    // Register the event listener for this request.
+    _registered[type].push(handler)
+
     // Continue request.
     return next()
   }
@@ -62,17 +69,32 @@ function middleware (type, selector, handler) {
  */
 function onEvent (e) {
   var type = e.type.toLowerCase()
-  var handlers = _handlers[type]
-  if (!handlers || !handlers.length) return
-
-  var handler
-  var len = handlers.length
+  var target = e.target
+  var handlers = _registered[type]
 
   // Run all matched events.
-  for (var i = 0; i < len; i++) {
-    handler = handlers[i]
-    // Setup current target which will match the delgated selector.
-    Object.defineProperty(e, 'currentTarget', { value: closest(e.target, handler._selector) })
-    if (e.currentTarget) handler(e)
+  for (var i = 0, len = handlers.length; i < len && !e.defaultPrevented; i++) {
+    var handler = handlers[i]
+    var selector = handler._selector
+    if (selector) {
+      // Setup current target which will match the delgated selector.
+      Object.defineProperty(e, 'currentTarget', { value: closest(target, selector) })
+      if (e.currentTarget) handler(e)
+    } else {
+      handler(e)
+    }
   }
+}
+
+/**
+ * @description
+ * Assert that a val is truthy and throw an error if not.
+ *
+ * @param {*} val - the value to test for truthyness.
+ * @param {String} msg - the message that will be thrown on failure.
+ * @throws {TypeError} err - throws an error if the value is not truthy.
+ */
+function assert (val, msg) {
+  if (val) return
+  throw new TypeError('@rill/delegate: ' + msg)
 }

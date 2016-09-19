@@ -38,7 +38,7 @@ npm install @rill/delegate
 
 # API
 
-### on(event, selector, handler)
+### on(event, [selector=document], handler)
 
   Creates a middleware that registers an event listener for the request
   when in the browser. (Does nothing server side).
@@ -55,6 +55,8 @@ app.get('/',
         // Here we can handle the event.
         ...
     }),
+    // We can also add event listeners to the window by omitting the selector.
+    on('scroll', e => ...),
     // Other middleware will run as normal.
     ...
 );
