@@ -114,8 +114,10 @@ function onEvent (e) {
   var listeners = _listeners[type]
 
   // Run all matched events.
-  for (var i = 0, len = listeners.length; i < len && !e.defaultPrevented; i++) {
+  for (var i = 0, len = listeners.length; i < len; i++) {
+    if (e.defaultPrevented) return
     var listener = listeners[i]
+    if (!listener) continue
     var selector = listener.selector
     var handler = listener.handler
     if (selector) {
