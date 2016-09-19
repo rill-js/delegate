@@ -54,7 +54,7 @@ const delegate = require('@rill/delegate')
 // Setup middleware.
 app.use(delegate())
 
-// Will add the #on method to the rill context.
+// Now you can use `delegate.listen` to handle events for the current request.
 app.get('/', (ctx) => {
   // Here we listen for `keyup` events that match a `.search` element.
   delegate.listen('keyup', '.search', e => {
