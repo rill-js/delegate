@@ -43,32 +43,45 @@ npm install @rill/delegate
   Setups up a middleware that will reset event listeners once per request.
   This allows for page specific delegators.
 
-### delegate.listen(event, [selector=document], handler)
-
-  Registers a delegated event listener for the request when in the browser. (Does nothing server side).
-
 ```javascript
 const app = require('rill')()
 const delegate = require('@rill/delegate')
 
 // Setup middleware.
 app.use(delegate())
+```
 
-// Now you can use `delegate.listen` to handle events for the current request.
+### delegate.on(event, [selector=document], handler)
+
+  Registers a delegated event listener for the request.
+
+```javascript
 app.get('/', (ctx) => {
   // Here we listen for `keyup` events that match a `.search` element.
-  delegate.listen('keyup', '.search', e => {
+  delegate.on('keyup', '.search', e => {
       // `currentTarget` will be the element that matched the selector.
       const input = e.currentTarget;
       // Here we can handle the event.
       ...
   })
-  // We can also add event listeners to the window by omitting the selector.
-  delegate.listen('scroll', e => ...)
-});
 
-// The above click event will not be handled if we navigate to a different route.
-app.get('/contact', ...);
+  // We can also add event listeners to the window by omitting the selector.
+  delegate.on('scroll', e => ...)
+
+  // Finally, #on returns a function which can be used to stop the listener.
+  const cancel = delegate.on('scroll', e => ...)
+});
+```
+
+### delegate.once(event, [selector=document], handler)
+
+  Registers a delegated event listener for the request that is canceled after the first run.
+
+```javascript
+app.get('/', (ctx) => {
+  // Scroll will only fire at most once per request.
+  const cancel = delegate.once('scroll', e => ...)
+});
 ```
 
 ### Contributions

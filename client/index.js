@@ -5,7 +5,8 @@ var EVENTS = process.env.NODE_ENV !== 'production' && require('./events.json')
 var _listeners = {}
 
 // Expose api.
-delegate.listen = listen
+delegate.on = on
+delegate.once = once
 module.exports = delegate
 
 /**
@@ -37,7 +38,7 @@ function delegate (options) {
  * @param {String} [selector] - A valid css selector.
  * @param {Function} handler - The function called if the event is emitted.
  */
-function listen (type, selector, handler) {
+function on (type, selector, handler) {
   // Make selector optional (defaults to window).
   if (typeof selector === 'function') {
     handler = selector
@@ -57,10 +58,45 @@ function listen (type, selector, handler) {
   }
 
   // Add hanlder to registered event listeners.
-  _listeners[type].push({
+  var listener = {
     selector: selector,
     handler: handler
+  }
+  _listeners[type].push(listener)
+
+  /**
+   * A function that will cancel the event listener.
+   */
+  return function cancel () {
+    var listeners = _listeners[type]
+    listeners.splice(listeners.indexOf(listener), 1)
+  }
+}
+
+/**
+ * @public
+ * @description
+ * Registers an event delegator function for the browser that will only run once.
+ *
+ * @param {String} type - the type of event to listen for.
+ * @param {String} [selector] - A valid css selector.
+ * @param {Function} handler - The function called if the event is emitted.
+ */
+function once (type, selector, handler) {
+  // Make selector optional (defaults to window).
+  if (typeof selector === 'function') {
+    handler = selector
+    selector = null
+  }
+
+  assert(typeof handler === 'function', 'Event handler must be a function')
+
+  var cancel = on(type, selector, function (e) {
+    cancel()
+    handler(e)
   })
+
+  return cancel
 }
 
 /*
