@@ -2,23 +2,42 @@
 
 var closest = require('component-closest')
 var EVENTS = process.env.NODE_ENV !== 'production' && require('./events.json')
-var _registered = {}
+var _listeners = {}
 
-// Expose middleware.
-module.exports = middleware
+// Expose api.
+delegate.listen = listen
+module.exports = delegate
 
 /**
  * @public
  * @description
- * Creates a rill middleware that ensures an event handler is started
- * of a given type that matches a given selector for the current request.
- * Each request resets all listeners to keep them isolated.
+ * Creates a middleware that attaches a 'delegate' function to the rill context.
+ * This allows for creating request specific event listeners in the browser.
+ */
+function delegate (options) {
+  return function delegateMiddleware (ctx, next) {
+    // Reset event listeners once per request.
+    for (var key in _listeners) {
+      if (_listeners[key].length) {
+        _listeners[key] = []
+      }
+    }
+
+    // Continue request.
+    return next()
+  }
+}
+
+/**
+ * @public
+ * @description
+ * Registers an event delegator function for the browser.
  *
  * @param {String} type - the type of event to listen for.
  * @param {String} [selector] - A valid css selector.
  * @param {Function} handler - The function called if the event is emitted.
  */
-function middleware (type, selector, handler) {
+function listen (type, selector, handler) {
   // Make selector optional (defaults to window).
   if (typeof selector === 'function') {
     handler = selector
@@ -32,32 +51,16 @@ function middleware (type, selector, handler) {
   }
 
   // Lazily register event delegators.
-  if (!_registered[type]) {
-    _registered[type] = []
+  if (!_listeners[type]) {
+    _listeners[type] = []
     document.addEventListener(type, onEvent, true)
   }
 
-  // Store a hidden selector for use the delgator.
-  handler._selector = selector
-
-  return function (ctx, next) {
-    // Reset event listeners once per request.
-    if (!ctx._delegation_reset) {
-      ctx._delegation_reset = true
-
-      for (var key in _registered) {
-        if (_registered[key].length) {
-          _registered[key] = []
-        }
-      }
-    }
-
-    // Register the event listener for this request.
-    _registered[type].push(handler)
-
-    // Continue request.
-    return next()
-  }
+  // Add hanlder to registered event listeners.
+  _listeners[type].push({
+    selector: selector,
+    handler: handler
+  })
 }
 
 /*
@@ -70,12 +73,13 @@ function middleware (type, selector, handler) {
 function onEvent (e) {
   var type = e.type.toLowerCase()
   var target = e.target
-  var handlers = _registered[type]
+  var listeners = _listeners[type]
 
   // Run all matched events.
-  for (var i = 0, len = handlers.length; i < len && !e.defaultPrevented; i++) {
-    var handler = handlers[i]
-    var selector = handler._selector
+  for (var i = 0, len = listeners.length; i < len && !e.defaultPrevented; i++) {
+    var listener = listeners[i]
+    var selector = listener.selector
+    var handler = listener.handler
     if (selector) {
       // Setup current target which will match the delgated selector.
       Object.defineProperty(e, 'currentTarget', { value: closest(target, selector) })

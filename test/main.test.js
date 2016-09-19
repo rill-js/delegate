@@ -1,7 +1,8 @@
 var assert = require('assert')
 var agent = require('supertest')
 var Rill = require('rill')
-var on = require('../client')
+var delegate = require('../client')
+var listen = delegate.listen
 
 describe('Rill/Delegate', function () {
   it('should handle events for the current request', function (done) {
@@ -11,8 +12,13 @@ describe('Rill/Delegate', function () {
     var clicks = 0
 
     var request = agent(Rill()
-      .get('/1', on('click', '.item', function (e) { clicks += 1 }))
-      .get('/2', on('click', '.item', function (e) { clicks += 2 }))
+      .use(delegate())
+      .get('/1', function (ctx) {
+        listen('click', '.item', function (e) { clicks += 1 })
+      })
+      .get('/2', function (ctx) {
+        listen('click', '.item', function (e) { clicks += 2 })
+      })
       .listen())
 
     request
@@ -35,7 +41,8 @@ describe('Rill/Delegate', function () {
             assert.equal(clicks, 4)
             item.click()
             assert.equal(clicks, 6)
-          }).end(done)
+          })
+          .end(done)
       })
   })
 })

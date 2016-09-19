@@ -32,34 +32,40 @@ Isomorphic event delegation utility for Rill. This allows for isomorphic DOM eve
 # Installation
 
 #### Npm
-```console
+```bash
 npm install @rill/delegate
 ```
 
 # API
 
-### on(event, [selector=document], handler)
+### delegate(options)
 
-  Creates a middleware that registers an event listener for the request
-  when in the browser. (Does nothing server side).
+  Setups up a middleware that will reset event listeners once per request.
+  This allows for page specific delegators.
+
+### delegate.listen(event, [selector=document], handler)
+
+  Registers a delegated event listener for the request when in the browser. (Does nothing server side).
 
 ```javascript
 const app = require('rill')()
-const on = require('@rill/delegate')
+const delegate = require('@rill/delegate')
 
-app.get('/',
-    // Here we listen for `keyup` events that match a `.search` element.
-    on('keyup', '.search', e => {
-        // `currentTarget` will be the element that matched the selector.
-        const input = e.currentTarget;
-        // Here we can handle the event.
-        ...
-    }),
-    // We can also add event listeners to the window by omitting the selector.
-    on('scroll', e => ...),
-    // Other middleware will run as normal.
-    ...
-);
+// Setup middleware.
+app.use(delegate())
+
+// Will add the #on method to the rill context.
+app.get('/', (ctx) => {
+  // Here we listen for `keyup` events that match a `.search` element.
+  delegate.listen('keyup', '.search', e => {
+      // `currentTarget` will be the element that matched the selector.
+      const input = e.currentTarget;
+      // Here we can handle the event.
+      ...
+  })
+  // We can also add event listeners to the window by omitting the selector.
+  delegate.listen('scroll', e => ...)
+});
 
 // The above click event will not be handled if we navigate to a different route.
 app.get('/contact', ...);
