@@ -69,7 +69,9 @@ function on (type, selector, handler) {
    */
   return function cancel () {
     var listeners = _listeners[type]
-    listeners.splice(listeners.indexOf(listener), 1)
+    var index = listeners.indexOf(listener)
+    if (index === -1) return
+    listeners.splice(index, 1)
   }
 }
 
