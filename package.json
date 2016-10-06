@@ -9,12 +9,12 @@
     "component-closest": "^1.0.1"
   },
   "devDependencies": {
-    "jsdom": "9.5.0",
+    "jsdom": "9.6.0",
     "jsdom-global": "^2.1.0",
-    "mocha": "^3.0.2",
-    "rill": "^2.1.6",
+    "mocha": "^3.1.0",
+    "rill": "^2.3.2",
     "snazzy": "^5.0.0",
-    "standard": "^8.1.0",
+    "standard": "^8.3.0",
     "supertest": "^2.0.0"
   },
   "homepage": "https://github.com/rill-js/delegate",

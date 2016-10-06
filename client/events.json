@@ -59,5 +59,7 @@
 	"visibilitychange",
 	"volumechange",
 	"waiting",
-	"wheel"
+	"wheel",
+	"mount",
+	"dismount"
 ]

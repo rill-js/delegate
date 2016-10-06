@@ -2,7 +2,8 @@
 
 var closest = require('component-closest')
 var EVENTS = process.env.NODE_ENV !== 'production' && require('./events.json')
-var _listeners = {}
+var _pendingListeners = {}
+var _activeListeners = {}
 
 // Expose api.
 delegate.on = on
@@ -17,15 +18,28 @@ module.exports = delegate
  */
 function delegate (options) {
   return function delegateMiddleware (ctx, next) {
-    // Reset event listeners once per request.
-    for (var key in _listeners) {
-      if (_listeners[key].length) {
-        _listeners[key] = []
+    // After a request is finished make all of the registered event handlers active.
+    ctx.res.original.once('finish', updateEventHandlers)
+
+    // Reset pending event listeners once per request.
+    for (var key in _pendingListeners) {
+      if (_pendingListeners[key].length) {
+        _pendingListeners[key] = []
       }
     }
 
     // Continue request.
     return next()
+  }
+
+  /**
+   * Copy over pending event handlers to the active event handlers.
+   */
+  function updateEventHandlers () {
+    // Add new pending handlers.
+    for (var key in _pendingListeners) {
+      _activeListeners[key] = _pendingListeners[key]
+    }
   }
 }
 
@@ -52,8 +66,8 @@ function on (type, selector, handler) {
   }
 
   // Lazily register event delegators.
-  if (!_listeners[type]) {
-    _listeners[type] = []
+  if (!_pendingListeners[type]) {
+    _pendingListeners[type] = []
     document.addEventListener(type, onEvent, true)
   }
 
@@ -62,16 +76,25 @@ function on (type, selector, handler) {
     selector: selector,
     handler: handler
   }
-  _listeners[type].push(listener)
+  _pendingListeners[type].push(listener)
 
   /**
    * A function that will cancel the event listener.
    */
   return function cancel () {
-    var listeners = _listeners[type]
-    var index = listeners.indexOf(listener)
-    if (index === -1) return
-    listeners.splice(index, 1)
+    // Check if the handler is still pending.
+    var pending = _pendingListeners[type]
+    var pendingIndex = pending.indexOf(listener)
+    if (pendingIndex !== -1) {
+      pending.splice(pendingIndex, 1)
+    }
+
+    // Check for an active handler.
+    var active = _activeListeners[type]
+    var activeIndex = active.indexOf(listener)
+    if (activeIndex !== -1) {
+      active.splice(activeIndex, 1)
+    }
   }
 }
 
@@ -111,7 +134,7 @@ function once (type, selector, handler) {
 function onEvent (e) {
   var type = e.type.toLowerCase()
   var target = e.target
-  var listeners = _listeners[type]
+  var listeners = _activeListeners[type]
 
   // Run all matched events.
   for (var i = 0, len = listeners.length; i < len; i++) {
