@@ -1,9 +1,11 @@
 'use strict'
 
-var closest = require('component-closest')
+var closest = require('closest')
+var matches = require('matches-selector')
 var EVENTS = process.env.NODE_ENV !== 'production' && require('./events.json')
-var _pendingListeners = {}
-var _activeListeners = {}
+var _listeners = {}
+var _activeHandlers = []
+var _cancelHandlers = null
 
 // Expose api.
 delegate.on = on
@@ -18,27 +20,22 @@ module.exports = delegate
  */
 function delegate (options) {
   return function delegateMiddleware (ctx, next) {
-    // After a request is finished make all of the registered event handlers active.
-    ctx.res.original.once('finish', updateEventHandlers)
-
-    // Reset pending event listeners once per request.
-    for (var key in _pendingListeners) {
-      if (_pendingListeners[key].length) {
-        _pendingListeners[key] = []
-      }
-    }
+    // Reset old event handlers once per request by marking them as canceled.
+    ctx.res.original.once('finish', cancelPreviousHandlers)
+    _cancelHandlers = _activeHandlers
+    _activeHandlers = []
 
     // Continue request.
     return next()
   }
 
   /**
-   * Copy over pending event handlers to the active event handlers.
+   * Cancels all hanlders that have been placed in the '_cancelHandlers' array.
    */
-  function updateEventHandlers () {
-    // Add new pending handlers.
-    for (var key in _pendingListeners) {
-      _activeListeners[key] = _pendingListeners[key]
+  function cancelPreviousHandlers () {
+    for (var i = _cancelHandlers.length, cancel; i--;) {
+      cancel = _cancelHandlers[i]
+      cancel()
     }
   }
 }
@@ -66,35 +63,31 @@ function on (type, selector, handler) {
   }
 
   // Lazily register event delegators.
-  if (!_pendingListeners[type]) {
-    _pendingListeners[type] = []
+  if (!_listeners[type]) {
+    _listeners[type] = []
     document.addEventListener(type, onEvent, true)
   }
 
   // Add hanlder to registered event listeners.
+  var canceled = false
   var listener = {
     selector: selector,
     handler: handler
   }
-  _pendingListeners[type].push(listener)
+
+  _listeners[type].push(listener)
+  _activeHandlers.push(cancel)
+  return cancel
 
   /**
    * A function that will cancel the event listener.
    */
-  return function cancel () {
-    // Check if the handler is still pending.
-    var pending = _pendingListeners[type]
-    var pendingIndex = pending.indexOf(listener)
-    if (pendingIndex !== -1) {
-      pending.splice(pendingIndex, 1)
-    }
-
-    // Check for an active handler.
-    var active = _activeListeners[type]
-    var activeIndex = active.indexOf(listener)
-    if (activeIndex !== -1) {
-      active.splice(activeIndex, 1)
-    }
+  function cancel () {
+    if (canceled) return
+    var listeners = _listeners[type]
+    var index = listeners.indexOf(listener)
+    if (index !== -1) listeners.splice(index, 1)
+    canceled = true
   }
 }
 
@@ -134,7 +127,7 @@ function once (type, selector, handler) {
 function onEvent (e) {
   var type = e.type.toLowerCase()
   var target = e.target
-  var listeners = _activeListeners[type]
+  var listeners = _listeners[type]
 
   // Run all matched events.
   for (var i = 0, len = listeners.length; i < len; i++) {
@@ -145,7 +138,12 @@ function onEvent (e) {
     var handler = listener.handler
     if (selector) {
       // Setup current target which will match the delgated selector.
-      Object.defineProperty(e, 'currentTarget', { value: closest(target, selector) })
+      Object.defineProperty(e, 'currentTarget', {
+        configurable: true,
+        value: e.bubbles
+          ? closest(target, selector, true)
+          : matches(target, selector) && target
+      })
       if (e.currentTarget) handler(e)
     } else {
       handler(e)

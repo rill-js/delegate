@@ -6,7 +6,8 @@
   "browser": "client/index.js",
   "bugs": "https://github.com/rill-js/delegate/issues",
   "dependencies": {
-    "component-closest": "^1.0.1"
+    "closest": "0.0.1",
+    "matches-selector": "^1.0.0"
   },
   "devDependencies": {
     "jsdom": "9.6.0",
