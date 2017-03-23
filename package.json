@@ -1,7 +1,7 @@
 {
   "name": "@rill/delegate",
   "description": "Isomorphic request based event delegation for Rill.",
-  "version": "3.0.1",
+  "version": "4.0.0",
   "author": "Dylan Piercey <pierceydylan@gmail.com>",
   "browser": "client/index.js",
   "bugs": "https://github.com/rill-js/delegate/issues",
