@@ -15,10 +15,14 @@ describe('Rill/Delegate', function () {
     var request = agent(Rill()
       .use(delegate())
       .get('/1', function (ctx) {
-        on('click', '.item', function (e) { clicks += 1 })
+        on('click', '.item', function (e) {
+          clicks += 1
+        })
       })
       .get('/2', function (ctx) {
-        once('click', '.item', function (e) { clicks += 2 })
+        once('click', '.item', function (e) {
+          clicks += 2
+        })
       })
       .listen())
 

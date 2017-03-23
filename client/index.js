@@ -2,10 +2,10 @@
 
 var closest = require('closest')
 var matches = require('matches-selector')
+var fetch = require('@rill/http/adapter/browser').fetch
 var EVENTS = process.env.NODE_ENV !== 'production' && require('./events.json')
 var _listeners = {}
-var _activeHandlers = []
-var _cancelHandlers = null
+var _server = null
 
 // Expose api.
 delegate.on = on
@@ -20,23 +20,12 @@ module.exports = delegate
  */
 function delegate (options) {
   return function delegateMiddleware (ctx, next) {
-    // Reset old event handlers once per request by marking them as canceled.
-    ctx.res.original.once('finish', cancelPreviousHandlers)
-    _cancelHandlers = _activeHandlers
-    _activeHandlers = []
-
+    // Store reference to server for later.
+    _server = ctx.req.original.socket.server
+    // Clear all listeners.
+    for (var type in _listeners) _listeners[type] = []
     // Continue request.
     return next()
-  }
-
-  /**
-   * Cancels all hanlders that have been placed in the '_cancelHandlers' array.
-   */
-  function cancelPreviousHandlers () {
-    for (var i = _cancelHandlers.length, cancel; i--;) {
-      cancel = _cancelHandlers[i]
-      cancel()
-    }
   }
 }
 
@@ -68,27 +57,17 @@ function on (type, selector, handler) {
     document.addEventListener(type, onEvent, true)
   }
 
-  // Add hanlder to registered event listeners.
-  var canceled = false
-  var listener = {
-    selector: selector,
-    handler: handler
-  }
+  // Store selector on handler function.
+  handler.selector = selector
 
-  _listeners[type].push(listener)
-  _activeHandlers.push(cancel)
-  return cancel
+  // Register handler.
+  var handlers = _listeners[type]
+  var index = handlers.push(handler) - 1
 
   /**
-   * A function that will cancel the event listener.
+   * A function that will cancel the event listener once.
    */
-  function cancel () {
-    if (canceled) return
-    var listeners = _listeners[type]
-    var index = listeners.indexOf(listener)
-    if (index !== -1) listeners.splice(index, 1)
-    canceled = true
-  }
+  return function cancel () { cancel.done = cancel.done || handlers.splice(index, 1).length }
 }
 
 /**
@@ -109,9 +88,10 @@ function once (type, selector, handler) {
 
   assert(typeof handler === 'function', 'Event handler must be a function')
 
-  var cancel = on(type, selector, function (e) {
+  // Wrap #on but cancel after first run.
+  var cancel = on(type, selector, function (e, go) {
     cancel()
-    handler(e)
+    handler(e, go)
   })
 
   return cancel
@@ -125,17 +105,16 @@ function once (type, selector, handler) {
  * @param {Event} e - The DOM event being handled.
  */
 function onEvent (e) {
+  var handler, selector
   var type = e.type.toLowerCase()
   var target = e.target
-  var listeners = _listeners[type]
+  var handlers = _listeners[type]
 
   // Run all matched events.
-  for (var i = 0, len = listeners.length; i < len; i++) {
-    if (e.defaultPrevented) return
-    var listener = listeners[i]
-    if (!listener) continue
-    var selector = listener.selector
-    var handler = listener.handler
+  for (var i = 0, len = handlers.length; i < len && !e.defaultPrevented; i++) {
+    handler = handlers[i]
+    selector = handler.selector
+
     if (selector) {
       // Setup current target which will match the delgated selector.
       Object.defineProperty(e, 'currentTarget', {
@@ -144,11 +123,29 @@ function onEvent (e) {
           ? closest(target, selector, true)
           : matches(target, selector) && target
       })
-      if (e.currentTarget) handler(e)
+      if (e.currentTarget) handler(e, go)
     } else {
-      handler(e)
+      handler(e, go)
     }
   }
+}
+
+/**
+ * Tells Rill to navigate to a new route.
+ *
+ * @param {string} url - The url to navigate to.
+ * @param {object} [options] - The options for the request.
+ * @param {object} [options.method=GET] - The http verb to request.
+ * @param {object} [options.body] - A body to pass through the request as is.
+ * @param {object} [options.files] - A files to pass through request as is.
+ * @param {HTMLElement} [options.form] - A form to parse and pass through as the request body/files.
+ * @param {boolean} [options.scroll=true] - Should the request trigger a page scroll.
+ * @param {boolean} [options.history=true] - Should the request update the page url (only for get requests).
+ * @param {string|false} [opts.redirect='follow'] - Should we follow any redirects.
+ */
+function go (url, options) {
+  assert(_server, 'Could not navigate because Rill server was missing.')
+  fetch(_server, url, options)
 }
 
 /**

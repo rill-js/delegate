@@ -57,20 +57,28 @@ app.use(delegate())
 
 ```javascript
 app.get('/', (ctx) => {
-  // Here we listen for `keyup` events that match a `.search` element.
-  delegate.on('keyup', '.search', e => {
+  // Here we listen for `keyup` events that match a `.verification-code` element.
+  delegate.on('keyup', '.verification-code', (ev, go) => {
       // `currentTarget` will be the element that matched the selector.
-      const input = e.currentTarget;
-      // Here we can handle the event.
-      ...
+      const input = ev.currentTarget;
+      const code = input.value
+
+      // The second argument is the 'go' utility, which is much like native fetch but tells Rill to navigate.
+      if (code.length === 5) {
+        // In this case when we have 5 characters, we navigate to the submission page.
+        go('/submit', {
+          method: 'POST',
+          body: { code }
+        })
+      }
   })
 
   // We can also add event listeners to the window by omitting the selector.
-  delegate.on('scroll', e => ...)
+  delegate.on('scroll', ev => ...)
 
   // Finally, #on returns a function which can be used to stop the listener.
-  const cancel = delegate.on('scroll', e => ...)
-});
+  const cancel = delegate.on('scroll', ev => ...)
+})
 ```
 
 ### delegate.once(event, [selector=document], handler)
@@ -80,7 +88,7 @@ app.get('/', (ctx) => {
 ```javascript
 app.get('/', (ctx) => {
   // Scroll will only fire at most once per request.
-  const cancel = delegate.once('scroll', e => ...)
+  const cancel = delegate.once('scroll', (ev, go) => ...)
 });
 ```
 
