@@ -2,7 +2,7 @@
 
 var closest = require('closest')
 var matches = require('matches-selector')
-var fetch = require('@rill/http/adapter/browser').fetch
+var fetch = require('@rill/http/adapter/document').fetch
 var EVENTS = process.env.NODE_ENV !== 'production' && require('./events.json')
 var _listeners = {}
 var _server = null
